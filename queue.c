@@ -12,8 +12,11 @@
 queue_t *q_new()
 {
     queue_t *q = malloc(sizeof(queue_t));
-    /* TODO: What if malloc returned NULL? */
+    if (!q)
+        return NULL;
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
     return q;
 }
 
@@ -34,13 +37,26 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
-    list_ele_t *newh;
-    /* TODO: What should you do if the q is NULL? */
-    newh = malloc(sizeof(list_ele_t));
-    /* Don't forget to allocate space for the string and copy it */
-    /* What if either call to malloc returns NULL? */
+    if (!q)  // q is NULL
+        return false;
+    list_ele_t *newh = (list_ele_t *) malloc(sizeof(list_ele_t));
+    if (!newh) {  // malloc fail
+        free(newh);
+        return false;
+    }
+    int len = strlen(s) + 1;  // +1 to save \0
+    newh->value = (char *) malloc(sizeof(char) * len);
+    if (!newh->value) {  // malloc fail
+        free(newh->value);
+        free(newh);
+        return false;
+    }
+    strncpy(newh->value, s, len);
     newh->next = q->head;
     q->head = newh;
+    if (q->size == 0)
+        q->tail = newh;
+    q->size++;
     return true;
 }
 
@@ -56,7 +72,11 @@ bool q_insert_tail(queue_t *q, char *s)
     /* TODO: You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    return false;
+    list_ele_t *newt;  // newt means new tail
+    newt = malloc(sizeof(list_ele_t));
+    q->tail->next = newt;
+    q->tail = newt;
+    return true;
 }
 
 /*
@@ -71,8 +91,21 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* TODO: You need to fix up this code. */
     /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || !q->head || !sp) {  // queue is NULL/empty,or sp is NULL ->fail
+        return false;
+    }
+    list_ele_t *rdyrm = q->head;
+    int len = strlen(q->head->value) + 1;
+    if (bufsize < len)
+        len = bufsize;
+
+    strncpy(sp, q->head->value, len);
     q->head = q->head->next;
+    q->size--;
+    free(rdyrm->value);
+    free(rdyrm);
     return true;
+
 }
 
 /*
@@ -84,7 +117,7 @@ int q_size(queue_t *q)
     /* TODO: You need to write the code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    return 0;
+    return q->size;
 }
 
 /*
