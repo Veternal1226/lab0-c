@@ -25,6 +25,14 @@ void q_free(queue_t *q)
 {
     /* TODO: How about freeing the list elements and the strings? */
     /* Free queue structure */
+    if (!q)
+        return;
+    while (q->head) {
+        list_ele_t *target = q->head;
+        q->head = q->head->next;
+        free(target->value);
+        free(target);
+    }
     free(q);
 }
 
@@ -72,10 +80,27 @@ bool q_insert_tail(queue_t *q, char *s)
     /* TODO: You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
     /* TODO: Remove the above comment when you are about to implement. */
-    list_ele_t *newt;  // newt means new tail
-    newt = malloc(sizeof(list_ele_t));
+    if (!q)  // q is NULL
+        return false;
+    list_ele_t *newt = (list_ele_t *) malloc(sizeof(list_ele_t));
+    if (!newt) {  // malloc fail
+        free(newt);
+        return false;
+    }
+    int len = strlen(s) + 1;  // +1 to save \0
+    newt->value = (char *) malloc(sizeof(char) * len);
+    if (!newt->value) {  // malloc fail
+        free(newt->value);
+        free(newt);
+        return false;
+    }
+    strncpy(newt->value, s, len);
     q->tail->next = newt;
     q->tail = newt;
+    newt->next = NULL;
+    if (q->size == 0)
+        q->tail = newt;
+    q->size++;
     return true;
 }
 
