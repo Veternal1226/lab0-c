@@ -28,12 +28,12 @@ void q_free(queue_t *q)
     if (!q)
         return;
     while (q->head) {
-        list_ele_t *target = q->head;
-        q->head = q->head->next;
+        list_ele_t *target = q->head;  // record target
+        q->head = q->head->next;       // move to next
         free(target->value);
         free(target);
     }
-    free(q);
+    free(q);  // free list
 }
 
 /*
@@ -59,10 +59,11 @@ bool q_insert_head(queue_t *q, char *s)
         free(newh);
         return false;
     }
-    strncpy(newh->value, s, len);
+    memset(newh->value, '\0', len);
+    strncpy(newh->value, s, len - 1);
     newh->next = q->head;
     q->head = newh;
-    if (q->size == 0)
+    if (!q->tail)
         q->tail = newh;
     q->size++;
     return true;
@@ -94,12 +95,15 @@ bool q_insert_tail(queue_t *q, char *s)
         free(newt);
         return false;
     }
-    strncpy(newt->value, s, len);
-    q->tail->next = newt;
-    q->tail = newt;
     newt->next = NULL;
-    if (q->size == 0)
-        q->tail = newt;
+    memset(newt->value, '\0', len);
+    strncpy(newt->value, s, len - 1);
+    if (!q->tail) {  // q is empty
+        q->head = q->tail = newt;
+    } else {
+        q->tail->next = newt;
+    }
+    q->tail = newt;
     q->size++;
     return true;
 }
@@ -119,13 +123,15 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     if (!q || !q->head || !sp) {  // queue is NULL/empty,or sp is NULL ->fail
         return false;
     }
+    if (q->head->value) {
+        int len = strlen(q->head->value);
+        if (bufsize <= len)
+            len = bufsize - 1;
+        memset(sp, '\0', len + 1);
+        strncpy(sp, q->head->value, len);
+    }
     list_ele_t *rdyrm = q->head;
-    int len = strlen(q->head->value) + 1;
-    if (bufsize < len)
-        len = bufsize;
-
-    strncpy(sp, q->head->value, len);
-    q->head = q->head->next;
+    q->head = q->head->next;  // head move to next
     q->size--;
     free(rdyrm->value);
     free(rdyrm);
@@ -156,6 +162,21 @@ void q_reverse(queue_t *q)
 {
     /* TODO: You need to write the code for this function */
     /* TODO: Remove the above comment when you are about to implement. */
+    if (!q || !q->head || !q->head->next)
+        return;
+    list_ele_t *prev = NULL;
+    list_ele_t *target = q->head;
+    list_ele_t *prec = q->head->next;
+    q->tail = q->head;
+    while (prec) {
+        target->next = prev;
+        prev = target;
+        target = prec;
+        prec = prec->next;
+    }
+    target->next = prev;
+    q->head = target;
+
 }
 
 /*
